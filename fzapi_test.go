@@ -348,11 +348,11 @@ func TestFzAPIClientCert(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Bad Cert File Name
-	if err := ImportClientCert("tesin.pem", "test", "testout.pem", "test"); err == nil {
+	if err := ImportClientCert("tesin.pem", "test", filepath.Join("testdata", "testout.pem"), "test"); err == nil {
 		t.Fatal(err)
 	}
 	// Bad Key Password
-	if err := ImportClientCert(filepath.Join("testdata", "testin.pem"), "test", "testout.pem", "test"); err == nil {
+	if err := ImportClientCert(filepath.Join("testdata", "testin.pem"), "test", filepath.Join("testdata", "testout.pem"), "test"); err == nil {
 		t.Fatal(err)
 	}
 }
