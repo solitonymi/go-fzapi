@@ -1193,7 +1193,7 @@ type FzcConfig struct {
 }
 
 // LoadFzcConfig : FilZen Clientの設定ファイルを読み込む
-func LoadFzcConfig(path string) (*FzcConfig, error) {
+func LoadFzcConfig(path, key string) (*FzcConfig, error) {
 	config := &FzcConfig{}
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -1203,7 +1203,7 @@ func LoadFzcConfig(path string) (*FzcConfig, error) {
 		return nil, fmt.Errorf("LoadFzcConfig err=%v", err)
 	}
 	if config.FzUID != "" && config.FzPassword != "" {
-		pass, err := decrypt(config.FzUID+"FileZenRA", config.FzPassword)
+		pass, err := decrypt(config.FzUID+key, config.FzPassword)
 		if err == nil {
 			config.FzPassword = pass
 		}
@@ -1212,9 +1212,9 @@ func LoadFzcConfig(path string) (*FzcConfig, error) {
 }
 
 // SaveFzcConfig : FileZen Client設定ファイルの保存
-func SaveFzcConfig(config *FzcConfig, path string) error {
+func SaveFzcConfig(config *FzcConfig, path, key string) error {
 	if config.FzUID != "" && config.FzPassword != "" {
-		pass, err := encrypt(config.FzUID+"FileZenRA", config.FzPassword)
+		pass, err := encrypt(config.FzUID+key, config.FzPassword)
 		if err != nil {
 			return fmt.Errorf("SaveFzcConfig err=%v", err)
 		}

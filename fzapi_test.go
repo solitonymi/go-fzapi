@@ -369,11 +369,11 @@ func TestFzcConfig(t *testing.T) {
 		LocalFolder:  "test",
 	}
 	path := filepath.Join("testdata", "fzc.json")
-	if err := SaveFzcConfig(c, path); err != nil {
+	if err := SaveFzcConfig(c, path, "FileZenRA"); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(path)
-	cs, err := LoadFzcConfig(path)
+	cs, err := LoadFzcConfig(path, "FileZenRA")
 	if err != nil {
 		t.Fatal(err)
 	}
