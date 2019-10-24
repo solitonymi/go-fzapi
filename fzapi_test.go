@@ -356,3 +356,28 @@ func TestFzAPIClientCert(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestFzcConfig(t *testing.T) {
+	c := &FzcConfig{
+		FzURL:        "http://10.30.100.168",
+		FzPassword:   "admin",
+		FzUID:        "admin",
+		FzDownFolder: "test/download",
+		FzUpFolder:   "test/upload",
+		NotifyMode:   "ALL",
+		NotifyTo:     "ALL",
+		LocalFolder:  "test",
+	}
+	path := filepath.Join("testdata", "fzc.json")
+	if err := SaveFzcConfig(c, path); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(path)
+	cs, err := LoadFzcConfig(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cs.FzPassword != "admin" {
+		t.Errorf("Password save error saved password=%s", cs.FzPassword)
+	}
+}

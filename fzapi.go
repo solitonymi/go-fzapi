@@ -3,10 +3,14 @@ package fzapi
 import (
 	"bufio"
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	crand "crypto/rand"
 	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"encoding/xml"
 	"errors"
@@ -148,8 +152,8 @@ func (fz *FzAPI) FzSendPostReq(url string, body io.Reader, bSetCookie bool) (*ht
 }
 
 // FzLogin : FileZenへログインする
-func (fz *FzAPI) FzLogin(fzurl, uid, password string) error {
-	fz.URL = fzurl
+func (fz *FzAPI) FzLogin(fzURL, uid, password string) error {
+	fz.URL = fzURL
 	v := url.Values{}
 	v.Set("respmode", "xml")
 	v.Set("action", "Login")
@@ -1174,4 +1178,120 @@ func (fz *FzAPI) MbAdminImport(mode, uid, infile string) error {
 		return fmt.Errorf("Invalid MbAdminImport mode")
 	}
 	return fz.MbImportCSV(path, uid, infile, fileKey)
+}
+
+// FzcConfig : FileZen Client設定ファイルの定義
+type FzcConfig struct {
+	FzURL        string `json:"FzUrl"`
+	FzUID        string `json:"FzUid"`
+	FzPassword   string `json:"FzPassword"`
+	LocalFolder  string `json:"LocalFolder"`
+	FzDownFolder string `json:"FzDownFolder"`
+	FzUpFolder   string `json:"FzUpFolder"`
+	NotifyTo     string `json:"NotifyTo"`
+	NotifyMode   string `json:"NotifyMode"`
+}
+
+// LoadFzcConfig : FilZen Clientの設定ファイルを読み込む
+func LoadFzcConfig(path string) (*FzcConfig, error) {
+	config := &FzcConfig{}
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("LoadFzcConfig err=%v", err)
+	}
+	if err := json.Unmarshal(file, config); err != nil {
+		return nil, fmt.Errorf("LoadFzcConfig err=%v", err)
+	}
+	if config.FzUID != "" && config.FzPassword != "" {
+		pass, err := decrypt(config.FzUID+"FileZenRA", config.FzPassword)
+		if err == nil {
+			config.FzPassword = pass
+		}
+	}
+	return config, nil
+}
+
+// SaveFzcConfig : FileZen Client設定ファイルの保存
+func SaveFzcConfig(config *FzcConfig, path string) error {
+	if config.FzUID != "" && config.FzPassword != "" {
+		pass, err := encrypt(config.FzUID+"FileZenRA", config.FzPassword)
+		if err != nil {
+			return fmt.Errorf("SaveFzcConfig err=%v", err)
+		}
+		config.FzPassword = pass
+	}
+	b, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("SaveFzcConfig err=%v", err)
+	}
+	tmp := path + ".tmp"
+	f, err := os.Create(tmp)
+	if err != nil {
+		return fmt.Errorf("SaveFzcConfig err=%v", err)
+	}
+	_, err = f.Write(b)
+	if err != nil {
+		f.Close()
+		return fmt.Errorf("SaveFzcConfig err=%v", err)
+	}
+	f.Close()
+	os.Remove(path)
+	err = os.Rename(tmp, path)
+	if err != nil {
+		return fmt.Errorf("SaveFzcConfig err=%v", err)
+	}
+	return nil
+}
+
+// Util Crypto
+func getAesKey(keyText string) []byte {
+	if len(keyText) > 32 {
+		return []byte(keyText[:32])
+	}
+	for len(keyText) < 32 {
+		keyText += "S"
+	}
+	return []byte(keyText)
+}
+
+// encrypt string to base64 crypto using AES
+func encrypt(keyText string, text string) (string, error) {
+	key := getAesKey(keyText)
+	plaintext := []byte(text)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(crand.Reader, iv); err != nil {
+		return "", err
+	}
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
+	// convert to base64
+	return base64.URLEncoding.EncodeToString(ciphertext), nil
+}
+
+// decrypt from base64 to decrypted string
+func decrypt(keyText string, cryptoText string) (string, error) {
+	key := getAesKey(keyText)
+	ciphertext, _ := base64.URLEncoding.DecodeString(cryptoText)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(ciphertext) < aes.BlockSize {
+		return "", errors.New("ciphertext too short")
+	}
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+	stream := cipher.NewCFBDecrypter(block, iv)
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(ciphertext, ciphertext)
+	return fmt.Sprintf("%s", ciphertext), nil
 }
