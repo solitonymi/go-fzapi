@@ -5,7 +5,7 @@ FileZen API for golang
 [![Godoc Reference](https://godoc.org/github.com/solitonymi/go-fzapi?status.svg)](http://godoc.org/github.com/solitonymi/go-fzapi)
 [![Go Report Card](https://goreportcard.com/badge/solitonymi/go-fzapi)](https://goreportcard.com/report/solitonymi/go-fzapi)
 
-FileZeをGO言語から利用するためのAPIライブラリです。
+FileZenをGO言語から利用するためのAPIライブラリです。
 Soliton Systems K.K.の公式リリースではないため、
 サポートは、githubのみで行っております。
 
@@ -232,6 +232,33 @@ PEMまたは、PKCS#12の証明書の
 ```go
 	fz := &fzapi.FzAPI{}
 	if err := fz.LoadClientCert("変換した証明書", "パスワード"); err != nil {
+		log.Fatal(err)
+	}
+```
+
+### FileZen Client設定ファイルの保存
+
+```go
+	config := &fzapi.FzcConfig{
+		FzURL:        "http://10.30.100.168",
+		FzPassword:   "admin",
+		FzUID:        "admin",
+		FzDownFolder: "test/download",
+		FzUpFolder:   "test/upload",
+		NotifyMode:   "ALL",
+		NotifyTo:     "ALL",
+		LocalFolder:  "test",
+	}
+	if err := fzapi.SaveFzcConfig(config, "fzc.json", "Password"); err != nil {
+		log.Fatal(err)
+	}
+```
+
+### FileZen Client設定ファイルの読み込み
+
+```go
+	config, err := LoadFzcConfig("fzc.json", "Password")
+	if err != nil {
 		log.Fatal(err)
 	}
 ```
