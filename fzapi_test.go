@@ -365,7 +365,7 @@ func TestFzcConfig(t *testing.T) {
 		FzDownFolder: "test/download",
 		FzUpFolder:   "test/upload",
 		NotifyMode:   "ALL",
-		NotifyTo:     "ALL",
+		NotifyTo:     "AUTO",
 		LocalFolder:  "test",
 	}
 	path := filepath.Join("testdata", "fzc.json")
