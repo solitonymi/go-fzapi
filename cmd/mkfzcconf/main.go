@@ -14,7 +14,7 @@ import (
 // Config ファイルを利用するプログラムと合わせる必要がある。
 const MasterKey = "FileZenRA"
 
-var config fzapi.FzcConfig
+var config = fzapi.FzcConfig{}
 var path string
 
 func init() {
