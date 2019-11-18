@@ -876,7 +876,7 @@ func (fz *FzAPI) MbExportCSV(path, localFile string) error {
 var ErrRedirectAttempted = errors.New("redirect")
 
 // MbImportCSV : めるあど便関連のCSVインポート
-func (fz *FzAPI) MbImportCSV(path, uid, localFile, fileKey string) error {
+func (fz *FzAPI) MbImportCSV(path, uid, localFile, fileKey string, replace bool) error {
 	file, err := os.Open(localFile)
 	if err != nil {
 		return fmt.Errorf("MbImportCSV - os.Open Error: %v", err)
@@ -892,6 +892,9 @@ func (fz *FzAPI) MbImportCSV(path, uid, localFile, fileKey string) error {
 	_ = writer.WriteField("action", "import")
 	if uid != "" {
 		_ = writer.WriteField("uid", uid)
+	}
+	if replace {
+		_ = writer.WriteField("replace", "yes")
 	}
 	err = writer.Close()
 	if err != nil {
@@ -1163,6 +1166,7 @@ func (fz *FzAPI) MbAdminExport(mode, uid, outfile string) error {
 func (fz *FzAPI) MbAdminImport(mode, uid, infile string) error {
 	path := ""
 	fileKey := "file"
+	replace := false
 	switch mode {
 	case "authority":
 		path = "/admin/approve/import/authority"
@@ -1174,10 +1178,14 @@ func (fz *FzAPI) MbAdminImport(mode, uid, infile string) error {
 	case "admin_addrbook":
 		fileKey = "addrbook_file"
 		path = "/admin/addrbook/?action=import"
+	case "admin_addrbook_replace":
+		fileKey = "addrbook_file"
+		path = "/admin/addrbook/?action=import"
+		replace = true
 	default:
 		return fmt.Errorf("Invalid MbAdminImport mode")
 	}
-	return fz.MbImportCSV(path, uid, infile, fileKey)
+	return fz.MbImportCSV(path, uid, infile, fileKey, replace)
 }
 
 // FzcConfig : FileZen Client設定ファイルの定義

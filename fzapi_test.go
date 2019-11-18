@@ -317,10 +317,13 @@ func TestFzAPIMbAdminImport(t *testing.T) {
 		t.Fatalf("FzLogin err=%v", err)
 	}
 	if err := fz.MbAdminImport("addrbook", "", csv); err != nil {
-		t.Errorf("AdminImport err=%v", err)
+		t.Errorf("MbAdminImport addrbook err=%v", err)
 	}
 	if err := fz.MbAdminImport("admin_addrbook", "test", csv); err != nil {
-		t.Errorf("AdminImport err=%v", err)
+		t.Errorf("MbAdminImport admin_addrbook err=%v", err)
+	}
+	if err := fz.MbAdminImport("admin_addrbook_replace", "test", csv); err != nil {
+		t.Errorf("MbAdminImport admin_addrbook_replace err=%v", err)
 	}
 	if err := fz.FzLogout(); err != nil {
 		t.Fatalf("FzLogout err=%v", err)
