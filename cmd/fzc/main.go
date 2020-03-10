@@ -13,7 +13,7 @@ import (
 
 	"github.com/jhoonb/archivex"
 	fzapi "github.com/solitonymi/go-fzapi"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var logFile *os.File
